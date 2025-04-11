@@ -1,103 +1,180 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Колесо Фортуны</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f8f9fa;
-        }
-        .wheel-container {
-            position: relative;
-            display: inline-block;
-            margin-top: 50px;
-        }
-        .wheel {
-            border-radius: 50%;
-            width: 300px;
-            height: 300px;
-            border: 10px solid #000;
-            background-color: #f0ad4e;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .wheel .wheel-inner {
-            border-radius: 50%;
-            width: 280px;
-            height: 280px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-        .wheel .wheel-inner div {
-            position: absolute;
-            width: 50%;
-            height: 50%;
-            background-color: #28a745;
-            border-radius: 50%;
-        }
-        .wheel button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Cyber Neon Wheel</title>
+  <style>
+    body {
+      background: radial-gradient(ellipse at center, #0f0c29, #302b63, #24243e);
+      color: #0ff;
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+    canvas {
+      background: transparent;
+      display: block;
+      margin: 0 auto;
+    }
+    #spin {
+      margin-top: 30px;
+      padding: 10px 25px;
+      font-size: 20px;
+      background: #00ffff33;
+      border: 2px solid #0ff;
+      color: #0ff;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: 0.3s;
+    }
+    #spin:hover {
+      background: #0ff;
+      color: #000;
+    }
+    #history {
+      margin-top: 40px;
+      font-size: 16px;
+      color: #0ff;
+    }
+  </style>
 </head>
 <body>
 
-    <h1>Колесо Фортуны</h1>
-    <p>Нажми на кнопку, чтобы крутить колесо и выиграть приз!</p>
+  <h1>🎯 Кибер-Неоновое Колесо Фортуны</h1>
+  <canvas id="wheel" width="500" height="500"></canvas>
+  <button id="spin">Крутить</button>
 
-    <div class="wheel-container">
-        <div class="wheel">
-            <div class="wheel-inner">
-                <!-- Сектора будут здесь -->
-                <div style="transform: rotate(0deg); background-color: #f0ad4e;"></div>
-                <div style="transform: rotate(45deg); background-color: #f0ad4e;"></div>
-                <div style="transform: rotate(90deg); background-color: #5bc0de;"></div>
-                <div style="transform: rotate(135deg); background-color: #5bc0de;"></div>
-                <div style="transform: rotate(180deg); background-color: #d9534f;"></div>
-                <div style="transform: rotate(225deg); background-color: #d9534f;"></div>
-                <div style="transform: rotate(270deg); background-color: #5bc0de;"></div>
-                <div style="transform: rotate(315deg); background-color: #5bc0de;"></div>
-            </div>
-        </div>
-        <button id="spinButton">Крутить</button>
-    </div>
+  <div id="history"></div>
 
-    <p id="result"></p>
+  <!-- ✅ Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <script>
-        const prizes = ['Приз 1', 'Приз 2', 'Приз 3', 'Приз 4', 'Приз 5', 'Приз 6', 'Приз 7', 'Приз 8'];
-        const wheel = document.querySelector('.wheel');
-        const spinButton = document.getElementById('spinButton');
-        const resultText = document.getElementById('result');
-        
-        function rotateWheel() {
-            const spinAngle = Math.floor(Math.random() * 360) + 720; // Обеспечиваем несколько полных оборотов
-            wheel.style.transition = 'transform 3s ease-out';
-            wheel.style.transform = `rotate(${spinAngle}deg)`;
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand(); // Открыть на весь экран
+    const user_id = tg?.initDataUnsafe?.user?.id;
 
-            setTimeout(() => {
-                const sectorIndex = Math.floor(((spinAngle % 360) / 45)); // Каждые 45 градусов - новый сектор
-                resultText.textContent = `Вы выиграли: ${prizes[sectorIndex]}`;
-            }, 3000); // Через 3 секунды, когда вращение завершится
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const spinButton = document.getElementById("spin");
+
+    const API_URL = "https://yourdomain.com/api/save_win"; // 🔁 Заменить на твой сервер
+
+    const prizes = [
+      { label: "🔮 100 баллов", color: "#0ff", chance: 20 },
+      { label: "💎 200 баллов", color: "#0f0", chance: 15 },
+      { label: "🎁 300 баллов", color: "#f0f", chance: 10 },
+      { label: "🍀 Удача!", color: "#ff0", chance: 5 },
+      { label: "❌ Пусто", color: "#f00", chance: 50 }
+    ];
+
+    const totalChance = prizes.reduce((sum, p) => sum + p.chance, 0);
+    const numSectors = prizes.length;
+    const arc = 2 * Math.PI / numSectors;
+    let angle = 0;
+    let isSpinning = false;
+
+    function drawWheel() {
+      for (let i = 0; i < numSectors; i++) {
+        const start = angle + i * arc;
+        const end = start + arc;
+        ctx.beginPath();
+        ctx.fillStyle = prizes[i].color;
+        ctx.arc(250, 250, 240, start, end);
+        ctx.lineTo(250, 250);
+        ctx.fill();
+        ctx.save();
+        ctx.translate(250, 250);
+        ctx.rotate(start + arc / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 16px Arial";
+        ctx.fillText(prizes[i].label, 230, 10);
+        ctx.restore();
+      }
+    }
+
+    function pickPrize() {
+      const rand = Math.random() * totalChance;
+      let sum = 0;
+      for (let i = 0; i < prizes.length; i++) {
+        sum += prizes[i].chance;
+        if (rand <= sum) return i;
+      }
+      return prizes.length - 1;
+    }
+
+    function spinWheel() {
+      if (isSpinning) return;
+      isSpinning = true;
+
+      const resultIndex = pickPrize();
+      const fullTurns = 5;
+      const finalAngle = (numSectors - resultIndex) * arc - arc / 2;
+      const targetAngle = fullTurns * 2 * Math.PI + finalAngle;
+      let start = performance.now();
+
+      function animate(time) {
+        const duration = 4000;
+        const progress = Math.min((time - start) / duration, 1);
+        angle = easeOutCubic(progress) * targetAngle;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawWheel();
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          const result = prizes[resultIndex];
+          alert(`🎉 Вы выиграли: ${result.label}`);
+          saveHistory(result.label);
+          sendResultToServer(result.label);
+          isSpinning = false;
         }
+      }
 
-        spinButton.addEventListener('click', rotateWheel);
-    </script>
+      requestAnimationFrame(animate);
+    }
+
+    function easeOutCubic(x) {
+      return 1 - Math.pow(1 - x, 3);
+    }
+
+    function saveHistory(prize) {
+      const history = JSON.parse(localStorage.getItem("wheelHistory") || "[]");
+      history.unshift({ prize: prize, time: new Date().toLocaleString() });
+      localStorage.setItem("wheelHistory", JSON.stringify(history));
+      updateHistory();
+    }
+
+    function updateHistory() {
+      const container = document.getElementById("history");
+      const history = JSON.parse(localStorage.getItem("wheelHistory") || "[]");
+      container.innerHTML = "<h3>📜 История выигрышей:</h3>" +
+        history.slice(0, 10).map(h =>
+          `<div>🎯 <b>${h.prize}</b> — <small>${h.time}</small></div>`).join("");
+    }
+
+    async function sendResultToServer(prize) {
+      if (!user_id) {
+        console.error("Ошибка: не удалось получить Telegram user_id");
+        return;
+      }
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: user_id, prize: prize })
+        });
+        const data = await response.json();
+        console.log("Ответ сервера:", data);
+      } catch (e) {
+        console.error("Ошибка отправки на сервер:", e);
+      }
+    }
+
+    spinButton.addEventListener("click", spinWheel);
+    drawWheel();
+    updateHistory();
+  </script>
+
 </body>
 </html>
