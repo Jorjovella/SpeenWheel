@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -19,14 +19,24 @@
     }
 
     #wheel {
-      width: 300px;
-      height: 300px;
+      width: 80vw;
+      height: 80vw;
+      max-width: 300px;
+      max-height: 300px;
       border: 10px solid #0ff;
       border-radius: 50%;
       margin: 40px auto;
       position: relative;
-      background: conic-gradient(#0ff 0% 16.6%, #f0f 16.6% 33.3%, #ff0 33.3% 50%, #0f0 50% 66.6%, #f00 66.6% 83.3%, #00f 83.3% 100%);
+      background: conic-gradient(
+        #0ff 0% 16.6%, 
+        #f0f 16.6% 33.3%, 
+        #ff0 33.3% 50%, 
+        #0f0 50% 66.6%, 
+        #f00 66.6% 83.3%, 
+        #00f 83.3% 100%
+      );
       transition: transform 4s ease-out;
+      transform: rotate(0deg); /* Обязательно для анимации */
     }
 
     #spinBtn {
@@ -87,7 +97,7 @@
     const tg = window.Telegram.WebApp;
     const userId = tg?.initDataUnsafe?.user?.id;
 
-    // Проверка, можно ли крутить
+    // Проверка возможности кручения
     if (userId) {
       fetch("https://cyberspin-back.onrender.com/api/can_spin", {
         method: "POST",
@@ -100,6 +110,10 @@
             resultDiv.textContent = "⛔ Вы уже крутили!";
             spinBtn.disabled = true;
           }
+        })
+        .catch(() => {
+          resultDiv.textContent = "⚠️ Ошибка проверки. Попробуйте позже.";
+          spinBtn.disabled = true;
         });
     }
 
@@ -107,10 +121,10 @@
       if (hasSpun || spinning) return;
 
       spinning = true;
+      spinBtn.disabled = true;
 
-      // Случайный сектор
       const prizeIndex = Math.floor(Math.random() * prizes.length);
-      const angle = 360 * 5 + angles[prizeIndex]; // 5 оборотов + нужный сектор
+      const angle = 360 * 5 + angles[prizeIndex]; // 5 полных оборотов + сектор
 
       wheel.style.transform = `rotate(${angle}deg)`;
 
@@ -118,17 +132,15 @@
         const prize = prizes[prizeIndex];
         resultDiv.textContent = `🎉 Вы выиграли: ${prize}`;
         hasSpun = true;
-        spinBtn.disabled = true;
 
-        // Отправка данных о выигрыше в API
+        // Отправка результата
         if (userId) {
           fetch("https://cyberspin-back.onrender.com/api/save_win", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code: userId, prize: prize })
+            body: JSON.stringify({ user_id: userId, prize: prize }) // <--- ВАЖНО
           }).catch(console.error);
         }
-
       }, 4000);
     };
   </script>
