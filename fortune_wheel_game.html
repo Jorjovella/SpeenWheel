@@ -36,7 +36,7 @@
         #00f 83.3% 100%
       );
       transition: transform 4s ease-out;
-      transform: rotate(0deg); /* Обязательно для анимации */
+      transform: rotate(0deg);
     }
 
     #spinBtn {
@@ -84,65 +84,84 @@
   <div id="result"></div>
 
   <script>
-    const wheel = document.getElementById("wheel");
-    const spinBtn = document.getElementById("spinBtn");
-    const resultDiv = document.getElementById("result");
+    document.addEventListener("DOMContentLoaded", function () {
+      const wheel = document.getElementById("wheel");
+      const spinBtn = document.getElementById("spinBtn");
+      const resultDiv = document.getElementById("result");
 
-    let spinning = false;
-    let hasSpun = false;
+      let spinning = false;
+      let hasSpun = false;
 
-    const prizes = ["100₽", "Стикер", "Бонус", "Пусто", "Скидка", "Сюрприз"];
-    const angles = [0, 60, 120, 180, 240, 300];
+      const prizes = ["100₽", "Стикер", "Бонус", "Пусто", "Скидка", "Сюрприз"];
+      const angles = [0, 60, 120, 180, 240, 300];
 
-    const tg = window.Telegram.WebApp;
-    const userId = tg?.initDataUnsafe?.user?.id;
+      const tg = window.Telegram.WebApp;
+      const userId = tg?.initDataUnsafe?.user?.id || "360217490"; // fallback для отладки
 
-    // Проверка возможности кручения
-    if (userId) {
-      fetch("https://upset-candies-kick.loca.lt/api/can_spin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: userId })
-      })
+      console.log("TG WebApp object:", tg);
+      console.log("User ID:", userId);
+
+      // Проверка возможности кручения
+      if (userId) {
+        fetch("https://upset-candies-kick.loca.lt/api/can_spin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: userId })
+        })
         .then(res => res.json())
         .then(data => {
+          console.log("Spin check result:", data);
           if (!data.can_spin) {
             resultDiv.textContent = "⛔ Вы уже крутили!";
             spinBtn.disabled = true;
           }
         })
-        .catch(() => {
+        .catch((err) => {
+          console.error("Ошибка проверки:", err);
           resultDiv.textContent = "⚠️ Ошибка проверки. Попробуйте позже.";
           spinBtn.disabled = true;
         });
-    }
+      } else {
+        resultDiv.textContent = "❌ Не удалось получить ID пользователя.";
+        spinBtn.disabled = true;
+      }
 
-    spinBtn.onclick = function () {
-      if (hasSpun || spinning) return;
+      // Обработчик нажатия
+      spinBtn.onclick = function () {
+        console.log("Кнопка нажата");
 
-      spinning = true;
-      spinBtn.disabled = true;
-
-      const prizeIndex = Math.floor(Math.random() * prizes.length);
-      const angle = 360 * 5 + angles[prizeIndex]; // 5 полных оборотов + сектор
-
-      wheel.style.transform = `rotate(${angle}deg)`;
-
-      setTimeout(() => {
-        const prize = prizes[prizeIndex];
-        resultDiv.textContent = `🎉 Вы выиграли: ${prize}`;
-        hasSpun = true;
-
-        // Отправка результата
-        if (userId) {
-          fetch("https://upset-candies-kick.loca.lt/api/save_win", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code: userId, prize: prize }) // <--- ВАЖНО
-          }).catch(console.error);
+        if (hasSpun || spinning) {
+          console.log("Уже крутили или в процессе");
+          return;
         }
-      }, 4000);
-    };
+
+        spinning = true;
+        spinBtn.disabled = true;
+
+        const prizeIndex = Math.floor(Math.random() * prizes.length);
+        const angle = 360 * 5 + angles[prizeIndex]; // вращение + сектор
+
+        console.log("Приз:", prizes[prizeIndex], "Угол:", angle);
+        wheel.style.transform = `rotate(${angle}deg)`;
+
+        setTimeout(() => {
+          const prize = prizes[prizeIndex];
+          resultDiv.textContent = `🎉 Вы выиграли: ${prize}`;
+          hasSpun = true;
+
+          if (userId) {
+            fetch("https://upset-candies-kick.loca.lt/api/save_win", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ code: userId, prize: prize })
+            })
+            .then(res => res.json())
+            .then(data => console.log("Результат сохранения:", data))
+            .catch(console.error);
+          }
+        }, 4000);
+      };
+    });
   </script>
 
 </body>
