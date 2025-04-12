@@ -84,6 +84,25 @@
     const prizes = ["100₽", "Стикер", "Бонус", "Пусто", "Скидка", "Сюрприз"];
     const angles = [0, 60, 120, 180, 240, 300];
 
+    const tg = window.Telegram.WebApp;
+    const userId = tg?.initDataUnsafe?.user?.id;
+
+    // Проверка, можно ли крутить
+    if (userId) {
+      fetch("https://cyberspin-back.onrender.com/api/can_spin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: userId })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (!data.can_spin) {
+            resultDiv.textContent = "⛔ Вы уже крутили!";
+            spinBtn.disabled = true;
+          }
+        });
+    }
+
     spinBtn.onclick = function () {
       if (hasSpun || spinning) return;
 
@@ -101,15 +120,12 @@
         hasSpun = true;
         spinBtn.disabled = true;
 
-        // Получаем user_id из Telegram WebApp
-        const tg = window.Telegram.WebApp;
-        const userId = tg?.initDataUnsafe?.user?.id;
-
+        // Отправка данных о выигрыше в API
         if (userId) {
-          fetch("https://yourdomain.com/api/save_win", {
+          fetch("https://cyberspin-back.onrender.com/api/save_win", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: userId, prize: prize })
+            body: JSON.stringify({ code: userId, prize: prize })
           }).catch(console.error);
         }
 
