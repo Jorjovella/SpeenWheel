@@ -99,7 +99,7 @@
 
     // Проверка возможности кручения
     if (userId) {
-      fetch("https://gold-aliens-appear.loca.lt/api/can_spin", {
+      fetch("https://wild-chefs-walk.loca.lt/api/can_spin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: userId })
@@ -135,7 +135,7 @@
 
         // Отправка результата
         if (userId) {
-          fetch("https://gold-aliens-appear.loca.lt/api/save_win", {
+          fetch("https://wild-chefs-walk.loca.lt/api/save_win", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: userId, prize: prize }) // <--- ВАЖНО
