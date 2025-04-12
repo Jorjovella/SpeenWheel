@@ -138,7 +138,7 @@
           fetch("https://wild-chefs-walk.loca.lt/api/save_win", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: userId, prize: prize }) // <--- ВАЖНО
+            body: JSON.stringify({ code: userId, prize: prize }) // <--- ВАЖНО
           }).catch(console.error);
         }
       }, 4000);
