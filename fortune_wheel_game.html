@@ -84,84 +84,74 @@
   <div id="result"></div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const wheel = document.getElementById("wheel");
-      const spinBtn = document.getElementById("spinBtn");
-      const resultDiv = document.getElementById("result");
+    const wheel = document.getElementById("wheel");
+    const spinBtn = document.getElementById("spinBtn");
+    const resultDiv = document.getElementById("result");
 
-      let spinning = false;
-      let hasSpun = false;
+    let spinning = false;
+    let hasSpun = false;
 
-      const prizes = ["100₽", "Стикер", "Бонус", "Пусто", "Скидка", "Сюрприз"];
-      const angles = [0, 60, 120, 180, 240, 300];
+    const prizes = ["100₽", "Стикер", "Бонус", "Пусто", "Скидка", "Сюрприз"];
+    const angles = [0, 60, 120, 180, 240, 300];
 
+    // --- Получение userId с учётом отсутствия Telegram ---
+    let userId = null;
+
+    if (window.Telegram && window.Telegram.WebApp) {
       const tg = window.Telegram.WebApp;
-      const userId = tg?.initDataUnsafe?.user?.id || "360217490"; // fallback для отладки
+      userId = tg.initDataUnsafe?.user?.id;
+      console.log("🟢 Telegram WebApp detected. userId:", userId);
+    } else {
+      console.warn("⚠️ Telegram WebApp not found. Using fallback test userId.");
+      userId = "test_user_360217490"; // ← временный ID
+    }
 
-      console.log("TG WebApp object:", tg);
-      console.log("User ID:", userId);
-
-      // Проверка возможности кручения
-      if (userId) {
-        fetch("https://upset-candies-kick.loca.lt/api/can_spin", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: userId })
-        })
+    // Проверка возможности кручения
+    if (userId) {
+      fetch("https://upset-candies-kick.loca.lt/api/can_spin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: userId })
+      })
         .then(res => res.json())
         .then(data => {
-          console.log("Spin check result:", data);
           if (!data.can_spin) {
             resultDiv.textContent = "⛔ Вы уже крутили!";
             spinBtn.disabled = true;
           }
         })
-        .catch((err) => {
-          console.error("Ошибка проверки:", err);
+        .catch(() => {
           resultDiv.textContent = "⚠️ Ошибка проверки. Попробуйте позже.";
           spinBtn.disabled = true;
         });
-      } else {
-        resultDiv.textContent = "❌ Не удалось получить ID пользователя.";
-        spinBtn.disabled = true;
-      }
+    }
 
-      // Обработчик нажатия
-      spinBtn.onclick = function () {
-        console.log("Кнопка нажата");
+    // Кнопка запуска
+    spinBtn.onclick = function () {
+      if (hasSpun || spinning) return;
 
-        if (hasSpun || spinning) {
-          console.log("Уже крутили или в процессе");
-          return;
+      spinning = true;
+      spinBtn.disabled = true;
+
+      const prizeIndex = Math.floor(Math.random() * prizes.length);
+      const angle = 360 * 5 + angles[prizeIndex]; // 5 оборотов + нужный сектор
+
+      wheel.style.transform = `rotate(${angle}deg)`;
+
+      setTimeout(() => {
+        const prize = prizes[prizeIndex];
+        resultDiv.textContent = `🎉 Вы выиграли: ${prize}`;
+        hasSpun = true;
+
+        if (userId) {
+          fetch("https://upset-candies-kick.loca.lt/api/save_win", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code: userId, prize: prize })
+          }).catch(console.error);
         }
-
-        spinning = true;
-        spinBtn.disabled = true;
-
-        const prizeIndex = Math.floor(Math.random() * prizes.length);
-        const angle = 360 * 5 + angles[prizeIndex]; // вращение + сектор
-
-        console.log("Приз:", prizes[prizeIndex], "Угол:", angle);
-        wheel.style.transform = `rotate(${angle}deg)`;
-
-        setTimeout(() => {
-          const prize = prizes[prizeIndex];
-          resultDiv.textContent = `🎉 Вы выиграли: ${prize}`;
-          hasSpun = true;
-
-          if (userId) {
-            fetch("https://upset-candies-kick.loca.lt/api/save_win", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ code: userId, prize: prize })
-            })
-            .then(res => res.json())
-            .then(data => console.log("Результат сохранения:", data))
-            .catch(console.error);
-          }
-        }, 4000);
-      };
-    });
+      }, 4000);
+    };
   </script>
 
 </body>
