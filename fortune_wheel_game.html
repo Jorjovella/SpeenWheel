@@ -10,22 +10,29 @@
       text-align: center;
       background: #111;
       color: #fff;
+      margin: 0;
+      padding: 20px;
     }
 
     h1 {
       margin-top: 30px;
       font-size: 2.5em;
       color: #0ff;
+      text-shadow: 0 0 10px #0ff;
+    }
+
+    #wheel-container {
+      position: relative;
+      margin: 40px auto;
+      width: 300px;
+      height: 300px;
     }
 
     #wheel {
-      width: 80vw;
-      height: 80vw;
-      max-width: 300px;
-      max-height: 300px;
+      width: 100%;
+      height: 100%;
       border: 10px solid #0ff;
       border-radius: 50%;
-      margin: 40px auto;
       position: relative;
       background: conic-gradient(
         #0ff 0% 16.6%, 
@@ -35,28 +42,9 @@
         #f00 66.6% 83.3%, 
         #00f 83.3% 100%
       );
-      transition: transform 4s ease-out;
+      transition: transform 4s cubic-bezier(0.17, 0.67, 0.21, 0.99);
       transform: rotate(0deg);
-    }
-
-    #spinBtn {
-      padding: 15px 30px;
-      font-size: 1.2em;
-      background: #0ff;
-      border: none;
-      color: #000;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-
-    #spinBtn:disabled {
-      background: gray;
-      cursor: not-allowed;
-    }
-
-    #result {
-      margin-top: 20px;
-      font-size: 1.5em;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
     }
 
     .pointer {
@@ -66,15 +54,65 @@
       border-right: 20px solid transparent;
       border-bottom: 30px solid #fff;
       position: absolute;
-      top: -30px;
+      top: -15px;
       left: calc(50% - 20px);
+      z-index: 10;
+      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
+    }
+
+    #spinBtn {
+      padding: 15px 30px;
+      font-size: 1.2em;
+      background: linear-gradient(45deg, #0ff, #f0f);
+      border: none;
+      color: #000;
+      border-radius: 50px;
+      cursor: pointer;
+      margin: 20px auto;
+      display: block;
+      font-weight: bold;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+      transition: all 0.3s;
+    }
+
+    #spinBtn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.9);
+    }
+
+    #spinBtn:disabled {
+      background: #555;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 1.5em;
+      min-height: 2em;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      max-width: 80%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .wheel-label {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      font-weight: bold;
+      color: #000;
+      text-shadow: 0 0 2px #fff;
+      transform-origin: center;
     }
   </style>
 </head>
 <body>
-
   <h1>CyberSpinWin</h1>
-
+  
   <div id="wheel-container">
     <div class="pointer"></div>
     <div id="wheel"></div>
@@ -88,27 +126,52 @@
     const spinBtn = document.getElementById("spinBtn");
     const resultDiv = document.getElementById("result");
 
+    // Для локального тестирования:
+    const API_BASE = "http://localhost:8080";
+    // Для публикации через ngrok:
+    // const API_BASE = "https://your-ngrok-url.ngrok.io";
+    // Для GitHub Pages + хостинг:
+    // const API_BASE = "https://your-flask-app.herokuapp.com";
+
     let spinning = false;
     let hasSpun = false;
 
     const prizes = ["100₽", "Стикер", "Бонус", "Пусто", "Скидка", "Сюрприз"];
-    const angles = [0, 60, 120, 180, 240, 300];
+    const angles = [30, 90, 150, 210, 270, 330]; // Центры секторов
 
-    // --- Получение userId с учётом отсутствия Telegram ---
+    // Создание меток на колесе
+    function createWheelLabels() {
+      const container = document.getElementById("wheel");
+      prizes.forEach((prize, index) => {
+        const label = document.createElement("div");
+        label.className = "wheel-label";
+        label.textContent = prize;
+        label.style.transform = `rotate(${angles[index]}deg) translateY(-120px)`;
+        container.appendChild(label);
+      });
+    }
+
+    // Получение userId
     let userId = null;
-
     if (window.Telegram && window.Telegram.WebApp) {
       const tg = window.Telegram.WebApp;
       userId = tg.initDataUnsafe?.user?.id;
       console.log("🟢 Telegram WebApp detected. userId:", userId);
+      tg.expand(); // Развернуть WebApp на весь экран
     } else {
       console.warn("⚠️ Telegram WebApp not found. Using fallback test userId.");
-      userId = "test_user_360217490"; // ← временный ID
+      userId = "test_user_" + Math.floor(Math.random() * 1000000);
     }
 
     // Проверка возможности кручения
-    if (userId) {
-      fetch("https://tricky-chicken-80.telebit.io/api/can_spin", {
+    function checkSpinAvailability() {
+      if (!userId) {
+        resultDiv.textContent = "⚠️ Ошибка: не удалось определить пользователя";
+        spinBtn.disabled = true;
+        return;
+      }
+
+      fetch(` https://tricky-chicken-80.telebit.io/api/can_spin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: userId })
@@ -116,43 +179,66 @@
         .then(res => res.json())
         .then(data => {
           if (!data.can_spin) {
-            resultDiv.textContent = "⛔ Вы уже крутили!";
+            resultDiv.textContent = "⛔ Вы уже крутили колесо сегодня!";
             spinBtn.disabled = true;
+            hasSpun = true;
           }
         })
-        .catch(() => {
-          resultDiv.textContent = "⚠️ Ошибка проверки. Попробуйте позже.";
+        .catch(err => {
+          console.error("API error:", err);
+          resultDiv.textContent = "⚠️ Ошибка соединения с сервером";
           spinBtn.disabled = true;
         });
     }
 
-    // Кнопка запуска
-    spinBtn.onclick = function () {
+    // Обработчик кнопки
+    spinBtn.onclick = function() {
       if (hasSpun || spinning) return;
 
       spinning = true;
       spinBtn.disabled = true;
+      resultDiv.textContent = "🌀 Крутим...";
 
       const prizeIndex = Math.floor(Math.random() * prizes.length);
-      const angle = 360 * 5 + angles[prizeIndex]; // 5 оборотов + нужный сектор
+      const spinDegrees = 360 * 5 + angles[prizeIndex]; // 5 оборотов + выигрышный сектор
 
-      wheel.style.transform = `rotate(${angle}deg)`;
+      wheel.style.transform = `rotate(${-spinDegrees}deg)`;
 
       setTimeout(() => {
-        const prize = prizes[prizeIndex];
-        resultDiv.textContent = `🎉 Вы выиграли: ${prize}`;
+        spinning = false;
         hasSpun = true;
-
-        if (userId) {
-          fetch("https://tricky-chicken-80.telebit.io/api/save_win", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code: userId, prize: prize })
-          }).catch(console.error);
-        }
+        const prize = prizes[prizeIndex];
+        resultDiv.textContent = `🎉 Поздравляем! Ваш выигрыш: ${prize}`;
+        saveResult(prize);
       }, 4000);
     };
-  </script>
 
+    // Сохранение результата
+    function saveResult(prize) {
+      if (!userId) return;
+
+      fetch(` https://tricky-chicken-80.telebit.io/api/save_win`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          code: userId, 
+          prize: prize 
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status !== "ok") {
+          console.error("Ошибка сохранения:", data);
+        }
+      })
+      .catch(err => {
+        console.error("Ошибка API:", err);
+      });
+    }
+
+    // Инициализация
+    createWheelLabels();
+    checkSpinAvailability();
+  </script>
 </body>
 </html>
