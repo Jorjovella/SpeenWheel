@@ -108,7 +108,7 @@
 
     // Проверка возможности кручения
     if (userId) {
-      fetch("https://upset-wolves-hide.loca.lt/api/can_spin", {
+      fetch("https://tricky-chicken-80.telebit.io/api/can_spin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: userId })
@@ -144,7 +144,7 @@
         hasSpun = true;
 
         if (userId) {
-          fetch("https://upset-wolves-hide.loca.lt/api/save_win", {
+          fetch("https://tricky-chicken-80.telebit.io/api/save_win", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ code: userId, prize: prize })
