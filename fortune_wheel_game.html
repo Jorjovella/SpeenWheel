@@ -104,10 +104,10 @@
   <div class="result" id="result"></div>
 
   <script>
-    // Укажите URL вашего API (тот же, что и у вашего HTTP-сервера)
+    // URL API вашего сервера (тот же, что в настройках Telebit)
     const API_URL = "https://tricky-chicken-80.telebit.io";
     
-    // Список призов и углы для секторов
+    // Список призов и соответствующие углы для сектора
     const prizes = ["100₽", "Stickers", "Bonus", "Try Again", "Discount", "Mystery Prize"];
     const sectorAngles = [30, 90, 150, 210, 270, 330];
     
@@ -116,15 +116,15 @@
     const spinBtn = document.getElementById('spinBtn');
     const resultDiv = document.getElementById('result');
     
-    // Получаем код из URL
+    // Получаем код из URL (?code=ВАШ_КОД)
     const urlParams = new URLSearchParams(window.location.search);
     let code = urlParams.get('code');
-    if(!code){
+    if(!code) {
       resultDiv.textContent = "⚠️ Код не передан в URL";
       spinBtn.disabled = true;
     }
     
-    // Проверка права на спин по коду
+    // Проверка возможности спина по коду через API
     async function checkSpinEligibility() {
       try {
         const response = await fetch(`${API_URL}/api/can_spin`, {
@@ -166,7 +166,7 @@
           body: JSON.stringify({
             code: code,
             prize: prize,
-            user_id: 0 // или передайте реальный user_id, если он доступен
+            user_id: 0 // При необходимости можно заменить на реальный user_id
           })
         });
         
@@ -183,7 +183,7 @@
       }
     }
     
-    // Спин колеса
+    // Запуск анимации спина и последующая обработка результата
     spinBtn.addEventListener('click', async function() {
       if (this.disabled) return;
       
@@ -205,7 +205,7 @@
       }, 4000);
     });
     
-    // Инициализация
+    // Инициализация проверки спина при загрузке страницы
     (async function() {
       await checkSpinEligibility();
     })();
