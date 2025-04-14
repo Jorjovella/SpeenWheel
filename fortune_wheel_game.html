@@ -1,214 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CyberSpinWin</title>
-  <style>
-    :root {
-      --color-primary: #0ff;
-      --color-secondary: #f0f;
-      --color-bg: #111;
-    }
-    
-    body {
-      font-family: 'Arial', sans-serif;
-      background: var(--color-bg);
-      color: white;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-      overflow-x: hidden;
-    }
-    
-    .wheel-container {
-      position: relative;
-      width: 300px;
-      height: 300px;
-      margin: 40px auto;
-    }
-    
-    .wheel {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      border: 8px solid var(--color-primary);
-      position: relative;
-      overflow: hidden;
-      transition: transform 4s cubic-bezier(0.17, 0.67, 0.21, 0.99);
-      transform: rotate(0deg);
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-      background: conic-gradient(
-          #0ff 0% 16.6%,
-          #f0f 16.6% 33.3%,
-          #ff0 33.3% 50%,
-          #0f0 50% 66.6%,
-          #f00 66.6% 83.3%,
-          #00f 83.3% 100%
-      );
-    }
-    
-    .pointer {
-      position: absolute;
-      top: -15px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 20px solid transparent;
-      border-right: 20px solid transparent;
-      border-bottom: 30px solid white;
-      z-index: 10;
-      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
-    }
-    
-    .spin-btn {
-      background: linear-gradient(45deg, var(--color-primary), var(--color-secondary));
-      color: black;
-      border: none;
-      padding: 15px 30px;
-      font-size: 18px;
-      border-radius: 50px;
-      cursor: pointer;
-      font-weight: bold;
-      margin: 20px 0;
-      transition: all 0.3s;
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
-    }
-    
-    .spin-btn:disabled {
-      background: #555;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-    
-    .result {
-      background: rgba(0, 0, 0, 0.3);
-      padding: 15px;
-      border-radius: 10px;
-      margin: 20px auto;
-      max-width: 80%;
-      min-height: 50px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>CyberSpinWin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --color-primary: #0ff;
+            --color-secondary: #f0f;
+            --color-bg: #111;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: var(--color-bg);
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 40px auto;
+        }
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid var(--color-primary);
+            position: relative;
+            overflow: hidden;
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.21, 0.99);
+            transform: rotate(0deg);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            background: conic-gradient(
+                #0ff 0% 16.6%,
+                #f0f 16.6% 33.3%,
+                #ff0 33.3% 50%,
+                #0f0 50% 66.6%,
+                #f00 66.6% 83.3%,
+                #00f 83.3% 100%
+            );
+        }
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 30px solid white;
+            z-index: 10;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
+        }
+        .spin-btn {
+            background: linear-gradient(45deg, var(--color-primary), var(--color-secondary));
+            color: black;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 20px 0;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+        }
+        .spin-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .result {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px auto;
+            max-width: 80%;
+            min-height: 50px;
+        }
+    </style>
 </head>
 <body>
-  <h1>CyberSpinWin</h1>
-  
-  <div class="wheel-container">
-    <div class="pointer"></div>
-    <div class="wheel" id="wheel"></div>
-  </div>
-  
-  <button class="spin-btn" id="spinBtn">SPIN WHEEL</button>
-  <div class="result" id="result"></div>
+    <h1>CyberSpinWin</h1>
+    <div class="wheel-container">
+        <div class="pointer"></div>
+        <div class="wheel" id="wheel"></div>
+    </div>
+    <button class="spin-btn" id="spinBtn">SPIN WHEEL</button>
+    <div class="result" id="result"></div>
+    <script>
+        // Автоматическое определение базового URL приложения
+        const API_URL = "{{ request.host_url[:-1] }}";
+        // Массив призов
+        const prizes = ["100₽", "Stickers", "Bonus", "Try Again", "Discount", "Mystery Prize"];
+        // Углы секторов колеса (центр каждого сектора)
+        const sectorAngles = [30, 90, 150, 210, 270, 330];
+        // Идентификатор пользователя, переданный из Flask
+        const userId = "{{ user_id }}";
+        
+        const wheel = document.getElementById('wheel');
+        const spinBtn = document.getElementById('spinBtn');
+        const resultDiv = document.getElementById('result');
 
-  <script>
-    // URL API вашего сервера (тот же, что в настройках Telebit)
-    const API_URL = "https://tricky-chicken-80.telebit.io";
-    
-    // Список призов и соответствующие углы для сектора
-    const prizes = ["100₽", "Stickers", "Bonus", "Try Again", "Discount", "Mystery Prize"];
-    const sectorAngles = [30, 90, 150, 210, 270, 330];
-    
-    // Элементы
-    const wheel = document.getElementById('wheel');
-    const spinBtn = document.getElementById('spinBtn');
-    const resultDiv = document.getElementById('result');
-    
-    // Получаем код из URL (?code=ВАШ_КОД)
-    const urlParams = new URLSearchParams(window.location.search);
-    let code = urlParams.get('code');
-    if(!code) {
-      resultDiv.textContent = "⚠️ Код не передан в URL";
-      spinBtn.disabled = true;
-    }
-    
-    // Проверка возможности спина по коду через API
-    async function checkSpinEligibility() {
-      try {
-        const response = await fetch(`${API_URL}/api/can_spin`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({code: code})
+        // Проверяем, может ли пользователь вращать колесо
+        async function checkSpinEligibility() {
+            if (!userId) {
+                resultDiv.textContent = "⚠️ User not identified";
+                spinBtn.disabled = true;
+                return false;
+            }
+            try {
+                const response = await fetch(`${API_URL}/api/can_spin`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({user_id: userId})
+                });
+                const data = await response.json();
+                if (!data.can_spin) {
+                    resultDiv.textContent = "⛔ Уже крутили сегодня!";
+                    spinBtn.disabled = true;
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                resultDiv.textContent = "⚠️ Ошибка подключения";
+                spinBtn.disabled = true;
+                return false;
+            }
+        }
+
+        // Сохраняем результат вращения на сервере
+        async function saveSpinResult(prize) {
+            try {
+                await fetch(`${API_URL}/api/save_spin`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: userId,
+                        prize: prize
+                    })
+                });
+            } catch (e) {
+                console.error("Ошибка сохранения результата:", e);
+            }
+        }
+
+        // Обработчик клика по кнопке вращения
+        spinBtn.addEventListener('click', async function() {
+            if (this.disabled) return;
+            this.disabled = true;
+            resultDiv.textContent = "🌀 Крутим...";
+            const prizeIndex = Math.floor(Math.random() * prizes.length);
+            const spinDegrees = 360 * 5 + sectorAngles[prizeIndex];
+            wheel.style.transform = `rotate(-${spinDegrees}deg)`;
+            setTimeout(async () => {
+                const prize = prizes[prizeIndex];
+                resultDiv.textContent = `🎉 Вы выиграли: ${prize}!`;
+                await saveSpinResult(prize);
+            }, 4000);
         });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        if (data.error) {
-          resultDiv.textContent = `⚠️ Error: ${data.error}`;
-          spinBtn.disabled = true;
-          return false;
-        }
-        if (!data.can_spin) {
-          resultDiv.textContent = "⛔ Этот код уже использован!";
-          spinBtn.disabled = true;
-          return false;
-        }
-        return true;
-      } catch (error) {
-        console.error("API error:", error);
-        resultDiv.textContent = "⚠️ Connection error";
-        spinBtn.disabled = true;
-        return false;
-      }
-    }
-    
-    // Сохранение результата спина и пометка кода как использованного
-    async function saveSpinResult(prize) {
-      try {
-        const response = await fetch(`${API_URL}/api/save_spin`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            code: code,
-            prize: prize,
-            user_id: 0 // При необходимости можно заменить на реальный user_id
-          })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        if (data.error) {
-          console.error("Failed to save result:", data.error);
-        }
-      } catch (error) {
-        console.error("Failed to save result:", error);
-      }
-    }
-    
-    // Запуск анимации спина и последующая обработка результата
-    spinBtn.addEventListener('click', async function() {
-      if (this.disabled) return;
-      
-      const eligible = await checkSpinEligibility();
-      if(!eligible) return;
-      
-      this.disabled = true;
-      resultDiv.textContent = "🌀 Spinning...";
-      
-      const prizeIndex = Math.floor(Math.random() * prizes.length);
-      const spinDegrees = 360 * 5 + sectorAngles[prizeIndex];
-      
-      wheel.style.transform = `rotate(-${spinDegrees}deg)`;
-      
-      setTimeout(async () => {
-        const prize = prizes[prizeIndex];
-        resultDiv.textContent = `🎉 You won: ${prize}!`;
-        await saveSpinResult(prize);
-      }, 4000);
-    });
-    
-    // Инициализация проверки спина при загрузке страницы
-    (async function() {
-      await checkSpinEligibility();
-    })();
-  </script>
+
+        // Инициализация: проверяем возможность вращения
+        (async function () {
+            await checkSpinEligibility();
+        })();
+    </script>
 </body>
 </html>
